@@ -1,39 +1,31 @@
 package aanchev.cardgame;
 
-import java.util.Arrays;
-import java.util.List;
-
+import aanchev.cardgame.model.Deck;
 import aanchev.eventful.EventStream;
 
 public abstract class CardGame implements EventStream.Default<CardGame.Event<? extends CardGame.GameState>> {
 	
+	private Deck deck;
+
+	
+	/* Accessors */
+	
+	public Deck getDeck() {
+		return this.deck;
+	}
+	
+	protected void setDeck(Deck deck) {
+		this.deck = deck;
+	}
+	
+	
 	/* Inner Types */
 	
-	public static class GameState {};
+	public interface GameState {};
 	
 	public interface Event<S> {
 		public S getGameState();
 	};
-	
-	public interface Player {
-		public void play(GameState state);
-	};
-
-	
-	/* Player setup */
-	
-	private List<Player> players;
-	
-	public void setPlayers(Player... players) {
-		setPlayers(Arrays.asList(players));
-	}
-	public void setPlayers(List<Player> players) {
-		this.players = players;
-	}
-	
-	public List<Player> getPlayers() {
-		return this.players;
-	}
 	
 	
 	/* Game progression */
