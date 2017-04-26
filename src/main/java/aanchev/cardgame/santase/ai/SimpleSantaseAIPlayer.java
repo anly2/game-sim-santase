@@ -2,8 +2,6 @@ package aanchev.cardgame.santase.ai;
 
 import static aanchev.cardgame.santase.Santase.strength;
 
-import java.util.stream.Collectors;
-
 import aanchev.cardgame.model.Card;
 import aanchev.cardgame.model.Card.Suit;
 import aanchev.cardgame.santase.Santase.OutOfCardsException;

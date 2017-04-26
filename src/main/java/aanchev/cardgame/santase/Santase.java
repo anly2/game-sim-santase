@@ -322,13 +322,14 @@ public class Santase extends CardGame {
 		final int scoreA = playerA.countPoints();
 		final int scoreB = playerB.countPoints();
 		
+		System.err.println(scoreA + " vs " + scoreB);
+		
 		if (scoreA > 66 && scoreA > scoreB)
 			crown(playerA, scoreB);
 		else
 		if (scoreB > 66 && scoreB > scoreA)
 			crown(playerB, scoreA);
 		else {
-			System.err.println(scoreA + " vs " + scoreB);
 			crown(Player.NEITHER, 66);
 		}
 	}
