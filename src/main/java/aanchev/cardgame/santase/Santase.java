@@ -70,17 +70,70 @@ public class Santase extends CardGame {
 	/* Inner Types */
 	
 	public interface Player extends GamePlayer {
-		public void react(Move move, State state);
+		public void react(Move move);
 	}
 
 	public class State implements GameState {
+		
+		/* Actual State properties */
+		
 		protected int turn = 0;
+		protected Card trumpCard = null;
+		protected Card playedCard = null;
+		protected Player playerOnTurn = null;
+		
+		//#trusting: For performance reasons validity checks are omitted
+		//protected Map<Player, List<Card>> playerHands;
+
+		
+		/* State accessors */
+		
 		public int getTurn() {
 			return this.turn;
+		}
+		
+		public Card getTrumpCard() {
+			return this.trumpCard;
+		}
+		
+		public Card getPlayedCard() {
+			return playedCard;
+		}
+	
+	
+		/* Proxy Game Actions performable by players */
+		
+		public boolean playCard(Player player, Card card) {
+			return Santase.this.playCard(player, card);
+		}
+		
+		public boolean callPair(Player player, Card card) {
+			return Santase.this.callPair(player, card);
+		}
+		
+		public boolean exchangeTrump(Player player) {
+			return Santase.this.exchangeTrump(player);
+		}
+		
+		public boolean closeMarket(Player player) {
+			return Santase.this.closeMarket(player);
+		}
+		
+		public boolean doWinCount(Player player) {
+			return Santase.this.doWinCount(player);
 		}
 	}
 	
 	public static class Move implements GameEvent {
+		
+		public static class StateUsed extends Move {
+			public final State state;
+			
+			public StateUsed(State state) {
+				this.state = state;
+			}
+		}
+		
 		public static class Drawn extends Move {
 			public final Player player;
 			public final Card[] cards;
@@ -108,6 +161,10 @@ public class Santase extends CardGame {
 				return "The '"+trumpCard+"' was revealed as Trump";
 			}
 		}
+
+		public static class PlayExpected extends Move {
+
+		}
 	}
 	
 
@@ -130,6 +187,8 @@ public class Santase extends CardGame {
 	/* Game Phases */
 	
 	private void setup() {
+		broadcastState();
+		
 		draw(playerA, 3);
 		draw(playerB, 3);
 		draw(playerA, 2);
@@ -139,24 +198,79 @@ public class Santase extends CardGame {
 	
 
 	/* Game Moves performance */
+	
+	protected void broadcastState() {
+		Move broadcast = new Move.StateUsed(state);
+		playerA.react(broadcast);
+		playerB.react(broadcast);
+	}
 
 	protected void draw(Player player, int n) {
 		Card[] cards = deck.draw(n);
 		Move move = new Move.Drawn(player, cards);
 		
-		player.react(move, state);
+		//#trusting: For performance reasons, hands are not tracked
+		//state.playerHands.computeIfAbsent(player, k -> new HashMap<>()).addAll(Arrays.asList(cards));
+		
+		player.react(move);
 		fire(move);
 	}
 
 	protected void revealTrump() {
-		Card trumpCard = deck.draw();
-		Move trumpRevealed = new Move.TrumpRevealed(trumpCard);
+		state.trumpCard = deck.draw();
+		Move trumpRevealed = new Move.TrumpRevealed(state.trumpCard);
 		
-		playerA.react(trumpRevealed, state);
-		playerB.react(trumpRevealed, state);
+		playerA.react(trumpRevealed);
+		playerB.react(trumpRevealed);
 		fire(trumpRevealed);
 		
-		deck.putOnBottom(trumpCard);
+		deck.putOnBottom(state.trumpCard);
 	}
 	
+	
+	/* Game Actions performable by players */
+
+	//#trusting: For performance reasons, players are not double-checked
+	/*
+	private void checkPlayer(Player player) {
+		if (player != state.playerOnTurn)
+			throw new IllegalStateException("It is not the player's turn!");
+	}
+	*/
+	
+	
+	protected boolean playCard(Player player, Card card) {
+		//#trusting: For performance reasons, players are not double-checked
+		//checkPlayer(player);
+		
+		return false;
+	}
+	
+	protected boolean callPair(Player player, Card card) {
+		//#trusting: For performance reasons, players are not double-checked
+		//checkPlayer(player);
+		
+		return false;
+	}
+	
+	protected boolean exchangeTrump(Player player) {
+		//#trusting: For performance reasons, players are not double-checked
+		//checkPlayer(player);
+		
+		return false;
+	}
+	
+	protected boolean closeMarket(Player player) {
+		//#trusting: For performance reasons, players are not double-checked
+		//checkPlayer(player);
+		
+		return false;
+	}
+	
+	protected boolean doWinCount(Player player) {
+		//#trusting: For performance reasons, players are not double-checked
+		//checkPlayer(player);
+		
+		return false;
+	}
 }
