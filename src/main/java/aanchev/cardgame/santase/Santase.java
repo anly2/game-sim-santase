@@ -279,12 +279,6 @@ public class Santase extends CardGame {
 	
 	/* Inner Exceptions */
 	
-	protected static class NotEnoughDeckCardsException extends IllegalStateException {
-		public NotEnoughDeckCardsException(int n) {
-			super("There are less than "+n+" cards left in the deck!");
-		}
-	}
-	
 	public static class OutOfCardsException extends IllegalStateException {
 		public OutOfCardsException() {
 			super("Out of cards in hand");
@@ -333,8 +327,10 @@ public class Santase extends CardGame {
 		else
 		if (scoreB > 66 && scoreB > scoreA)
 			crown(playerB, scoreA);
-		else
+		else {
+			System.err.println(scoreA + " vs " + scoreB);
 			crown(Player.NEITHER, 66);
+		}
 	}
 	
 
@@ -348,7 +344,8 @@ public class Santase extends CardGame {
 
 	protected void draw(Player player, int n) {
 		if (deck.size() < n)
-			throw new NotEnoughDeckCardsException(n);
+			return;
+			//throw new NotEnoughDeckCardsException(n);
 		
 		Card[] cards = deck.draw(n);
 		Move move = new Move.Drawn(player, cards);
@@ -372,7 +369,7 @@ public class Santase extends CardGame {
 		try {
 			player.react(Move.PlayExpected.instance);
 		}
-		catch (NotEnoughDeckCardsException e) {
+		catch (OutOfCardsException e) {
 			finish();
 		}
 	}
