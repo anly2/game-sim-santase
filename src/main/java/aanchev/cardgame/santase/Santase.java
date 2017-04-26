@@ -51,7 +51,19 @@ public class Santase extends CardGame {
 	
 	/* Game-Specific Values */
 	
-	public int ordinal(Card.Rank rank) {
+	public static int score(Card.Rank rank) {
+		switch (rank) {
+		case N9: return 0;
+		case N10: return 10;
+		case Jack: return 2;
+		case Queen: return 3;
+		case King: return 4;
+		case Ace: return 11;
+		default: return -1;
+		}
+	}
+	
+	public static int ordinal(Card.Rank rank) {
 		switch (rank) {
 		case N2: return 2;
 		case N3: return 3;
@@ -70,8 +82,8 @@ public class Santase extends CardGame {
 		}
 	}
 	
-	public int strength(Card.Rank rank) {
-		return ordinal(rank);
+	public static int strength(Card.Rank rank) {
+		return score(rank);
 	}
 	
 	public boolean stronger(Card c0, Card c1) {
@@ -92,6 +104,16 @@ public class Santase extends CardGame {
 	
 	public interface Player extends GamePlayer {
 		public void react(Move move);
+		
+		//#! ideally this would not be a player's responsibility
+		//#trusting: For performance reasons, score counting is entrusted to players
+		public int countPoints();
+		
+		public static final Player NEITHER = new Player(){
+			public void react(Move move) {}
+			public int countPoints() { return 0; }
+			public String toString() { return "Neither Player"; }
+		};
 	}
 
 	public class State implements GameState {
@@ -102,6 +124,7 @@ public class Santase extends CardGame {
 		protected Card trumpCard = null;
 		protected Card playedCard = null;
 		protected Player winner = null;
+		protected int victoryPoints = 0; 
 		
 		
 		//#trusting: For performance reasons, players on turn are not tracked
@@ -131,6 +154,10 @@ public class Santase extends CardGame {
 		public Player getWinner() {
 			return this.winner;
 		}
+	
+		public int getVictoryPoints() {
+			return this.victoryPoints;
+		}
 		
 	
 		/* Proxy Game Actions performable by players */
@@ -157,7 +184,7 @@ public class Santase extends CardGame {
 	}
 	
 	public static class Move implements GameEvent {
-		
+
 		public static class StateUsed extends Move {
 			public final State state;
 			
@@ -228,13 +255,36 @@ public class Santase extends CardGame {
 			}
 		}
 		
+		private static class Victory extends Move {
+			public final Player winner;
+			public final int victoryPoints;
+			public final int turn;
+			
+			public Victory(Player winner, int victoryPoints, int turn) {
+				this.winner = winner;
+				this.victoryPoints = victoryPoints;
+				this.turn = turn;
+			}
+			
+			@Override
+			public String toString() {
+				return winner +" won "+victoryPoints+" points on turn "+turn;
+			}
+		}
 	}
 	
 	
 	/* Inner Exceptions */
-	protected static class NotEnoughCardsException extends IllegalStateException {
-		public NotEnoughCardsException(int n) {
+	
+	protected static class NotEnoughDeckCardsException extends IllegalStateException {
+		public NotEnoughDeckCardsException(int n) {
 			super("There are less than "+n+" cards left in the deck!");
+		}
+	}
+	
+	public static class OutOfCardsException extends IllegalStateException {
+		public OutOfCardsException() {
+			super("Out of cards in hand");
 		}
 	}
 	
@@ -271,6 +321,19 @@ public class Santase extends CardGame {
 		revealTrump();
 	}
 	
+	private void finish() {
+		final int scoreA = playerA.countPoints();
+		final int scoreB = playerB.countPoints();
+		
+		if (scoreA > 66 && scoreA > scoreB)
+			crown(playerA, scoreB);
+		else
+		if (scoreB > 66 && scoreB > scoreA)
+			crown(playerB, scoreA);
+		else
+			crown(Player.NEITHER, 66);
+	}
+	
 
 	/* Game Moves performance */
 	
@@ -282,7 +345,7 @@ public class Santase extends CardGame {
 
 	protected void draw(Player player, int n) {
 		if (deck.size() < n)
-			throw new NotEnoughCardsException(n);
+			throw new NotEnoughDeckCardsException(n);
 		
 		Card[] cards = deck.draw(n);
 		Move move = new Move.Drawn(player, cards);
@@ -303,7 +366,12 @@ public class Santase extends CardGame {
 	}
 	
 	protected void askToPlay(Player player) {
-		player.react(Move.PlayExpected.instance);
+		try {
+			player.react(Move.PlayExpected.instance);
+		}
+		catch (NotEnoughDeckCardsException e) {
+			finish();
+		}
 	}
 	
 	protected void take(Player player, Card... cards) {
@@ -314,6 +382,13 @@ public class Santase extends CardGame {
 		
 		player.react(move);
 		fire(move);
+	}
+	
+	protected void crown(Player player, int otherScore) {
+		state.winner = player;
+		state.victoryPoints = otherScore == 0 ? 3 : otherScore < 33 ? 2 : 1;
+		
+		fire(new Move.Victory(player, state.victoryPoints, state.turn));
 	}
 	
 	
@@ -338,7 +413,14 @@ public class Santase extends CardGame {
 			
 			fire(new Move.Played(player, card));
 			
-			take((stronger(c0, c1)? other(player) : player), c0, c1);
+			boolean lost = stronger(c0, c1);
+			Player otherPlayer = other(player);
+			
+			take((lost? otherPlayer : player), c0, c1);
+			state.playedCard = null;
+			
+			draw((lost? otherPlayer : player), 1);
+			draw((lost? player : otherPlayer), 1);
 		}
 		else {
 			state.playedCard = card;

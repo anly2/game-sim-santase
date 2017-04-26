@@ -1,7 +1,7 @@
 package aanchev.cardgame.santase;
 
 import aanchev.cardgame.CardGame;
-import aanchev.cardgame.santase.ai.SantaseAIPlayer;
+import aanchev.cardgame.santase.ai.SimpleSantaseAIPlayer;
 import aanchev.cardgame.ui.ConsoleUI;
 
 public class App 
@@ -12,8 +12,8 @@ public class App
         
         game.useUI(new ConsoleUI());
         game.setPlayers(
-        		new SantaseAIPlayer(),
-        		new SantaseAIPlayer()
+        		new SimpleSantaseAIPlayer(),
+        		new SimpleSantaseAIPlayer()
         );
         
         game.play();

@@ -11,14 +11,15 @@ import aanchev.cardgame.santase.Santase.Move;
 import aanchev.eventful.EventStream;
 import aanchev.eventful.Handler;
 
-public class SantaseAIPlayer implements Santase.Player, EventStream<Santase.Move> {
+public abstract class SantaseAIPlayer implements Santase.Player, EventStream<Santase.Move> {
 	
 	private static char L = 'A';
 	
-	private String name;
+	protected String name;
 	
-	private Santase.State gameState;
-	private List<Card> hand;
+	protected Santase.State gameState;
+	protected List<Card> hand;
+	protected int score = 0;
 	
 	
 	/* Construction */
@@ -48,6 +49,10 @@ public class SantaseAIPlayer implements Santase.Player, EventStream<Santase.Move
 		fire(move);
 	}
 	
+	public int countPoints() {
+		return this.score;
+	}
+	
 	
 	/* Reactions */
 	
@@ -63,6 +68,11 @@ public class SantaseAIPlayer implements Santase.Player, EventStream<Santase.Move
 				hand.add(card);
 		});
 		
+		on((Move.Taken move) -> {
+			for (Card card : move.cards)
+				score += Santase.score(card.rank);
+		});
+		
 		on((Move.PlayExpected move) -> {
 			doPlay();
 		});
@@ -75,12 +85,15 @@ public class SantaseAIPlayer implements Santase.Player, EventStream<Santase.Move
 			playResponse();
 	}
 	
-	protected void playRequest() {
-		//TODO
-	}
 	
-	protected void playResponse() {
-		//TODO
+	protected abstract void playRequest();
+	
+	protected abstract void playResponse();
+	
+	
+	protected void play(Card card) {
+		hand.remove(card);
+		gameState.playCard(this, card);
 	}
 	
 	
