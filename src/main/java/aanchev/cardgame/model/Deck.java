@@ -16,7 +16,7 @@ public class Deck {
 	}
 	
 	public Deck(boolean shuffled) {
-		this.cards = new LinkedList<>();
+		this.cards = new LinkedList<>(Arrays.asList(Card.values()));
 		
 		if (shuffled)
 			shuffle(this.cards);

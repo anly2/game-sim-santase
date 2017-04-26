@@ -66,15 +66,17 @@ public enum Card {
 	public enum Dye { Red, Black };
 	
 	public enum Suit {
-		Spades(Dye.Black),
-		Diamonds(Dye.Red),
-		Hearts(Dye.Red),
-		Clubs(Dye.Black);
+		Clubs("\u2663", Dye.Black),
+		Diamonds("\u2666", Dye.Red),
+		Hearts("\u2665", Dye.Red),
+		Spades("\u2660", Dye.Black);
 		
 		
+		public final String pip;
 		public final Dye dye;
 		
-		Suit(Dye dye) {
+		Suit(String pip, Dye dye) {
+			this.pip = pip;
 			this.dye = dye;
 		}
 	};
@@ -108,6 +110,15 @@ public enum Card {
 		this.rank = rank;
 	}
 
+	
+	public String getName() {
+		return rank.longName + " of " + suit.name();
+	}
+	
+	public String toString() {
+		return suit.pip + rank.shortName;
+	}
+	
 
 	public static List<Card> of(Suit suit) {
 		return Stream.of(Card.values()).filter(c -> c.suit == suit).collect(toList());

@@ -1,29 +1,51 @@
 package aanchev.cardgame.santase;
 
+import java.util.Arrays;
+import java.util.List;
+
 import aanchev.cardgame.CardGame;
 import aanchev.cardgame.model.Card;
 import aanchev.cardgame.model.Deck;
 
 public class Santase extends CardGame {
 	
-	private Player<Move, State> playerA;
-	private Player<Move, State> playerB;
+	/* Properties */
 	
-	private Deck deck;
 	private State state;
+
+	/* Convenience Properties */
+	
+	private Player playerA;
+	private Player playerB;
+
+	
+	/* Construction */
 	
 	public Santase() {
 		this.deck = new Deck(true);
 		deck.getCards().removeIf(c -> ordinal(c.rank) < 9);
 		this.state = new State();
 	}
-	
 
 	public static CardGame create() {
 		return new Santase(); //TODO: include setup here
 	}
 
 	
+	/* Accessors */
+	
+	@Override
+	public void setPlayers(List<GamePlayer> players) {
+		if (players.size() != 2)
+			throw new IllegalArgumentException("The Santase game has exactly two players!");
+		
+		super.setPlayers(players);
+		playerA = (Player) players.get(0);
+		playerB = (Player) players.get(1);
+	}
+	
+	
+	/* Game-Specific Values */
 	
 	public int ordinal(Card.Rank rank) {
 		switch (rank) {
@@ -45,68 +67,67 @@ public class Santase extends CardGame {
 	}
 	
 	
-	//TODO: merge into Move
-	public class Event implements CardGame.Event<GameState> {
-		@Override
-		public GameState getGameState() {
-			return state;
-		}
+	/* Inner Types */
+	
+	public interface Player extends GamePlayer {
+		public void react(Move move, State state);
+	}
 
-		
-		public class Drawn extends Event {
-			public Drawn(Player<Move, State> player, Card[] cards) {
-			}
-		}
-		
-		public class TrumpReveal extends Event {
-
-			public TrumpReveal(Card trumpCard) {
-			}
-			
+	public class State implements GameState {
+		protected int turn = 0;
+		public int getTurn() {
+			return this.turn;
 		}
 	}
 	
-	//TODO: remove generic params
-	public interface Player<MOVE, STATE> {
-		public void react(MOVE move, STATE state);
-	}
-	
-	//TODO: merge with Event
-	public class Move {
-		public class Drawn extends Move {
+	public static class Move implements GameEvent {
+		public static class Drawn extends Move {
+			public final Player player;
 			public final Card[] cards;
-			public Drawn(Card... drawn) {
+			
+			public Drawn(Player player, Card... drawn) {
+				this.player = player;
 				this.cards = drawn;
 			}
+		
+			@Override
+			public String toString() {
+				return player + " draws the card(s): " + Arrays.toString(cards);
+			}
 		}
 
-		public class TrumpRevealed extends Move {
+		public static class TrumpRevealed extends Move {
 			public final Card trumpCard;
+			
 			public TrumpRevealed(Card trumpCard) {
 				this.trumpCard = trumpCard;
 			}
+			
+			@Override
+			public String toString() {
+				return "The '"+trumpCard+"' was revealed as Trump";
+			}
 		}
 	}
 	
-	public class State implements GameState {
-	}
 
-
-	
-	private int turn = 0;
+	/* Game Interface */
 	
 	public boolean isOver() {
-		return (turn > 10);
+		return (state.turn > 10);
 	}
 	
 	@Override
 	public void progress() {
-		if (turn == 0)
+		if (state.turn == 0)
 			setup();
 		
 		
-		turn++;
+		state.turn++;
 	}
+	
+	
+	/* Game Phases */
 	
 	private void setup() {
 		draw(playerA, 3);
@@ -116,29 +137,26 @@ public class Santase extends CardGame {
 		revealTrump();
 	}
 	
-	
 
+	/* Game Moves performance */
 
-	//TODO: removes these
-	private Santase.Move moves = this.new Move();
-	private Santase.Event events = this.new Event();
-	
-	private void draw(Player<Move, State> player, int n) {
+	protected void draw(Player player, int n) {
 		Card[] cards = deck.draw(n);
-		player.react(moves.new Drawn(cards), state);
-		fire(events.new Drawn(player, cards));
+		Move move = new Move.Drawn(player, cards);
+		
+		player.react(move, state);
+		fire(move);
 	}
 
-	private void revealTrump() {
+	protected void revealTrump() {
 		Card trumpCard = deck.draw();
-		Move trumpRevealed = moves.new TrumpRevealed(trumpCard);
+		Move trumpRevealed = new Move.TrumpRevealed(trumpCard);
 		
 		playerA.react(trumpRevealed, state);
 		playerB.react(trumpRevealed, state);
+		fire(trumpRevealed);
 		
 		deck.putOnBottom(trumpCard);
-		
-		fire(events.new TrumpReveal(trumpCard));
 	}
 	
 }
