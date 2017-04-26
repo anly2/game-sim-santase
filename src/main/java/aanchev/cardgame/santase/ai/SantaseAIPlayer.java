@@ -1,7 +1,6 @@
 package aanchev.cardgame.santase.ai;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -9,7 +8,6 @@ import java.util.Set;
 import aanchev.cardgame.model.Card;
 import aanchev.cardgame.santase.Santase;
 import aanchev.cardgame.santase.Santase.Move;
-import aanchev.cardgame.santase.Santase.State;
 import aanchev.eventful.EventStream;
 import aanchev.eventful.Handler;
 
@@ -21,7 +19,6 @@ public class SantaseAIPlayer implements Santase.Player, EventStream<Santase.Move
 	
 	private Santase.State gameState;
 	private List<Card> hand;
-	private Card trump;
 	
 	
 	/* Construction */
@@ -66,18 +63,24 @@ public class SantaseAIPlayer implements Santase.Player, EventStream<Santase.Move
 				hand.add(card);
 		});
 		
-		on((Move.TrumpRevealed move) -> {
-			// We are shown the trump card
-			trump = move.trumpCard;
-		});
-		
 		on((Move.PlayExpected move) -> {
 			doPlay();
 		});
 	}
 	
-	public void doPlay() {
-		
+	protected void doPlay() {
+		if (gameState.getPlayedCard() == null)
+			playRequest();
+		else
+			playResponse();
+	}
+	
+	protected void playRequest() {
+		//TODO
+	}
+	
+	protected void playResponse() {
+		//TODO
 	}
 	
 	

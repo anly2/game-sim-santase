@@ -44,6 +44,10 @@ public class Santase extends CardGame {
 		playerB = (Player) players.get(1);
 	}
 	
+	public Player other(Player player) {
+		return (player == playerA)? playerB : playerA;
+	}
+	
 	
 	/* Game-Specific Values */
 	
@@ -66,6 +70,23 @@ public class Santase extends CardGame {
 		}
 	}
 	
+	public int strength(Card.Rank rank) {
+		return ordinal(rank);
+	}
+	
+	public boolean stronger(Card c0, Card c1) {
+		if (c0.suit == c1.suit)
+			return (strength(c0.rank) > strength(c1.rank));
+		
+		if (c1.suit == state.trumpCard.suit)
+			return false;
+		
+		// if c1.suit == trump.suit
+		// if different and neither is trump
+		
+		return true;
+	}
+	
 	
 	/* Inner Types */
 	
@@ -80,10 +101,17 @@ public class Santase extends CardGame {
 		protected int turn = 0;
 		protected Card trumpCard = null;
 		protected Card playedCard = null;
-		protected Player playerOnTurn = null;
+		protected Player winner = null;
 		
-		//#trusting: For performance reasons validity checks are omitted
+		
+		//#trusting: For performance reasons, players on turn are not tracked
+		//protected Player playerOnTurn = null;
+		
+		//#trusting: For performance reasons, player hands are not tracked
 		//protected Map<Player, List<Card>> playerHands;
+
+		//#trusting: For performance reasons, player win-piles are not tracked
+		//protected Map<Player, List<Card>> playerWinPiles;
 
 		
 		/* State accessors */
@@ -100,6 +128,10 @@ public class Santase extends CardGame {
 			return playedCard;
 		}
 	
+		public Player getWinner() {
+			return this.winner;
+		}
+		
 	
 		/* Proxy Game Actions performable by players */
 		
@@ -149,7 +181,7 @@ public class Santase extends CardGame {
 			}
 		}
 
-		public static class TrumpRevealed extends Move {
+		private static class TrumpRevealed extends Move {
 			public final Card trumpCard;
 			
 			public TrumpRevealed(Card trumpCard) {
@@ -163,7 +195,46 @@ public class Santase extends CardGame {
 		}
 
 		public static class PlayExpected extends Move {
-
+			private static PlayExpected instance = new PlayExpected();
+		}
+		
+		private static class Played extends Move {
+			public final Player player;
+			public final Card card;
+			
+			public Played(Player player, Card card) {
+				this.player = player;
+				this.card = card;
+			}
+		
+			@Override
+			public String toString() {
+				return player + " played " + card;
+			}
+		}
+		
+		public static class Taken extends Move {
+			public final Player player;
+			public final Card[] cards;
+			
+			public Taken(Player player, Card... won) {
+				this.player = player;
+				this.cards = won;
+			}
+		
+			@Override
+			public String toString() {
+				return player + " won the card(s): " + Arrays.toString(cards);
+			}
+		}
+		
+	}
+	
+	
+	/* Inner Exceptions */
+	protected static class NotEnoughCardsException extends IllegalStateException {
+		public NotEnoughCardsException(int n) {
+			super("There are less than "+n+" cards left in the deck!");
 		}
 	}
 	
@@ -171,7 +242,10 @@ public class Santase extends CardGame {
 	/* Game Interface */
 	
 	public boolean isOver() {
-		return (state.turn > 10);
+		if (state.winner != null)
+			return true;
+		
+		return (state.turn > 100);
 	}
 	
 	@Override
@@ -179,6 +253,7 @@ public class Santase extends CardGame {
 		if (state.turn == 0)
 			setup();
 		
+		askToPlay(state.playedCard == null ? playerA : playerB);
 		
 		state.turn++;
 	}
@@ -206,6 +281,9 @@ public class Santase extends CardGame {
 	}
 
 	protected void draw(Player player, int n) {
+		if (deck.size() < n)
+			throw new NotEnoughCardsException(n);
+		
 		Card[] cards = deck.draw(n);
 		Move move = new Move.Drawn(player, cards);
 		
@@ -218,13 +296,24 @@ public class Santase extends CardGame {
 
 	protected void revealTrump() {
 		state.trumpCard = deck.draw();
-		Move trumpRevealed = new Move.TrumpRevealed(state.trumpCard);
 		
-		playerA.react(trumpRevealed);
-		playerB.react(trumpRevealed);
-		fire(trumpRevealed);
+		fire(new Move.TrumpRevealed(state.trumpCard));
 		
 		deck.putOnBottom(state.trumpCard);
+	}
+	
+	protected void askToPlay(Player player) {
+		player.react(Move.PlayExpected.instance);
+	}
+	
+	protected void take(Player player, Card... cards) {
+		Move move = new Move.Taken(player, cards);
+		
+		//#trusting: For performance reasons, win-piles are not tracked
+		//state.playerWinPiles.computeIfAbsent(player, k -> new HashMap<>()).addAll(Arrays.asList(cards));
+		
+		player.react(move);
+		fire(move);
 	}
 	
 	
@@ -243,7 +332,21 @@ public class Santase extends CardGame {
 		//#trusting: For performance reasons, players are not double-checked
 		//checkPlayer(player);
 		
-		return false;
+		if (state.playedCard != null) {
+			final Card c0 = state.playedCard; //shorthand
+			final Card c1 = card; //shorthand
+			
+			fire(new Move.Played(player, card));
+			
+			take((stronger(c0, c1)? other(player) : player), c0, c1);
+		}
+		else {
+			state.playedCard = card;
+			
+			fire(new Move.Played(player, card));
+		}
+		
+		return true;
 	}
 	
 	protected boolean callPair(Player player, Card card) {
@@ -271,6 +374,10 @@ public class Santase extends CardGame {
 		//#trusting: For performance reasons, players are not double-checked
 		//checkPlayer(player);
 		
-		return false;
+		//#trusting: For performance reasons, score counting is entrusted to players
+		// ... do count scores, returning false upon insufficient points
+		
+		state.winner = player;
+		return true;
 	}
 }

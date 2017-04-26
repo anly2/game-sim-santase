@@ -35,6 +35,10 @@ public class Deck {
 		return this.cards;
 	}
 	
+	public int size() {
+		return this.cards.size();
+	}
+	
 	
 	public Card draw() {
 		return this.cards.removeFirst();
