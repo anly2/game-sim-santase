@@ -25,20 +25,12 @@ public class SimpleSantaseAIPlayer extends SantaseAIPlayer {
 	protected void playResponse() {
 		final Card played = gameState.getPlayedCard();
 		
-		System.out.print(hand.stream().map(Object::toString).collect(Collectors.joining(", ")));
-		System.out.print(" -> ");
-		
 		Card card = hand.stream()
 			.sorted((b, a) -> byPivottedStrength(played.rank, a, b))
 			.sorted((a, b) -> byFittingSuit(played.suit, a, b))
 			.sorted((a, b) -> byTrump(a, b))
-			.filter(c -> {
-				System.out.print(", "+ c);
-				return true;
-			}).collect(Collectors.toList()).stream()
 			.findFirst()
 			.orElseGet(() -> { throw new OutOfCardsException(); });
-		System.out.println();
 		
 		play(card);
 	}
