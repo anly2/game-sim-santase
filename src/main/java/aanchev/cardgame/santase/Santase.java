@@ -42,6 +42,8 @@ public class Santase extends CardGame {
 		super.setPlayers(players);
 		playerA = (Player) players.get(0);
 		playerB = (Player) players.get(1);
+		
+		state.cued = playerA;
 	}
 	
 	public Player other(Player player) {
@@ -123,8 +125,9 @@ public class Santase extends CardGame {
 		protected int turn = 0;
 		protected Card trumpCard = null;
 		protected Card playedCard = null;
+		protected Player cued = null;
 		protected Player winner = null;
-		protected int victoryPoints = 0; 
+		protected int victoryPoints = 0;
 		
 		
 		//#trusting: For performance reasons, players on turn are not tracked
@@ -303,7 +306,7 @@ public class Santase extends CardGame {
 		if (state.turn == 0)
 			setup();
 		
-		askToPlay(state.playedCard == null ? playerA : playerB);
+		askToPlay(state.playedCard == null ? state.cued : other(state.cued));
 		
 		state.turn++;
 	}
@@ -417,10 +420,12 @@ public class Santase extends CardGame {
 			Player otherPlayer = other(player);
 			
 			take((lost? otherPlayer : player), c0, c1);
-			state.playedCard = null;
 			
 			draw((lost? otherPlayer : player), 1);
 			draw((lost? player : otherPlayer), 1);
+			
+			state.playedCard = null;
+			state.cued = lost? otherPlayer : player;
 		}
 		else {
 			state.playedCard = card;
