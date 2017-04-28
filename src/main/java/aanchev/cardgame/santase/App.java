@@ -10,17 +10,24 @@ public class App {
     }
     
     private static void run() {
-        CardGame game = Santase.create();
-        
-        game.useUI(new ConsoleUI());
+        /* Setup Game */
+    	CardGame game = Santase.create();
+    	
         game.setPlayers(
         		new SimpleSantaseAIPlayer(),
         		new SimpleSantaseAIPlayer()
         );
         
-        for (int i=0; i<10000; i++) {
-        	game.play();
-        	game.reset();
+        /* Setup Game Sequencer*/
+        CardGame.Sequencer sequencer = new SantaseSequencer();
+
+        /* Setup Observers */
+        new ConsoleUI().bind(game);
+        
+
+        /* Do play */
+        for (int i=0; i<1000; i++) {
+        	sequencer.playSet(game);
         }
     }
 }

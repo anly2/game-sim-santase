@@ -16,10 +16,8 @@ public class Deck {
 	}
 	
 	public Deck(boolean shuffled) {
-		this.cards = new LinkedList<>(Arrays.asList(Card.values()));
-		
-		if (shuffled)
-			shuffle(this.cards);
+		this.cards = new LinkedList<>();
+		refresh(shuffled);
 	}
 	
 	public Deck(Card... cards) {
@@ -29,6 +27,22 @@ public class Deck {
 	public Deck(List<Card> cards) {
 		this.cards = new LinkedList<>(cards);
 	}
+	
+
+	public void refresh() {
+		refresh(false);
+	}
+	
+	public void refresh(boolean shuffled) {
+		this.cards.clear();
+		
+		for (Card card : Card.values())
+			this.cards.add(card);
+		
+		if (shuffled)
+			shuffle(this.cards);
+	}
+
 	
 	
 	public List<Card> getCards() {
@@ -72,4 +86,5 @@ public class Deck {
 		for (Card card : cards)
 			putOnBottom(card);
 	}
+
 }

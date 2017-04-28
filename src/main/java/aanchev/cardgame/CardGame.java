@@ -49,19 +49,22 @@ public abstract class CardGame implements EventStream.Default<CardGame.GameEvent
 	
 	public abstract boolean isOver();
 	public abstract void progress();
-
 	
 	public void play() {
 		while (!isOver())
 			progress();
 	}
+
 	
-	public abstract Deck recollectCards();
-	public abstract void reset();
+	/* Game Sequencer */
 	
-	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public <E> void useUI(UI<E> ui) {
-		ui.bind((EventStream<E>) (EventStream) this);
+	@FunctionalInterface
+	public static interface Sequencer {
+		public void cue(CardGame game);
+		
+		public default void playSet(CardGame game) {
+			game.play();
+			cue(game);
+		}
 	}
 }
