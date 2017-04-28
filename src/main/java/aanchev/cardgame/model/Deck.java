@@ -76,6 +76,11 @@ public class Deck {
 		for (Card card : cards)
 			putOnTop(card);
 	}
+
+	public void putOnTop(Iterable<Card> cards) {
+		for (Card card : cards)
+			putOnTop(card);
+	}
 	
 	
 	public void putOnBottom(Card card) {
@@ -87,4 +92,8 @@ public class Deck {
 			putOnBottom(card);
 	}
 
+	public void putOnBottom(Iterable<Card> cards) {
+		for (Card card : cards)
+			putOnBottom(card);
+	}
 }

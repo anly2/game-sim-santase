@@ -1,5 +1,6 @@
 package aanchev.cardgame.santase;
 
+import static java.util.Collections.addAll;
 import static java.util.Optional.ofNullable;
 
 import java.util.ArrayList;
@@ -223,7 +224,7 @@ public class Santase extends CardGame {
 			}
 		}
 
-		private static class TrumpRevealed extends Move {
+		public static class TrumpRevealed implements GameEvent {
 			public final Card trumpCard;
 			
 			public TrumpRevealed(Card trumpCard) {
@@ -240,7 +241,7 @@ public class Santase extends CardGame {
 			private static PlayExpected instance = new PlayExpected();
 		}
 		
-		private static class Played extends Move {
+		public static class Played implements GameEvent {
 			public final Player player;
 			public final Card card;
 			
@@ -270,7 +271,7 @@ public class Santase extends CardGame {
 			}
 		}
 		
-		private static class Victory extends Move {
+		public static class Victory implements GameEvent {
 			public final Player winner;
 			public final int victoryPoints;
 			public final int turn;
@@ -334,7 +335,7 @@ public class Santase extends CardGame {
 		final int scoreA = countScore(playerA);
 		final int scoreB = countScore(playerB);
 		
-		System.out.println(scoreA + " vs " + scoreB);
+//		System.out.println(scoreA + " vs " + scoreB);
 		
 		if (scoreA > 66 && scoreA > scoreB)
 			crown(playerA, scoreB);
@@ -363,9 +364,8 @@ public class Santase extends CardGame {
 		Card[] cards = deck.draw(n);
 		Move move = new Move.Drawn(player, cards);
 		
-		state.playerHands
-			.computeIfAbsent(player, k -> new ArrayList<>(5))
-			.addAll(Arrays.asList(cards));
+		addAll(state.playerHands.computeIfAbsent(player, k -> new ArrayList<>(5)),
+				cards);
 		
 		player.react(move);
 		fire(move);
@@ -391,9 +391,8 @@ public class Santase extends CardGame {
 	protected void take(Player player, Card... cards) {
 		Move move = new Move.Taken(player, cards);
 		
-		state.playerWinPiles
-			.computeIfAbsent(player, k -> new LinkedList<>())
-			.addAll(Arrays.asList(cards));
+		addAll(state.playerWinPiles.computeIfAbsent(player, k -> new LinkedList<>()),
+			cards);
 		
 		player.react(move);
 		fire(move);
@@ -571,9 +570,9 @@ public class Santase extends CardGame {
 				
 				lead = points.entrySet().stream().max((a,b) -> Integer.compare(a.getValue(), b.getValue())).get();
 				if (lead.getValue() >= setPoints) {
-					System.out.print("set:");
-					points.forEach((player, p) -> System.out.print(" " + player + "/" + p));
-					System.out.println();
+//					System.out.print("set:");
+//					points.forEach((player, p) -> System.out.print(" " + player + "/" + p));
+//					System.out.println();
 					
 					g.fire(new SetWon(lead.getKey()));
 					return;
