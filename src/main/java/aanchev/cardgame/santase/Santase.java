@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 
 import aanchev.cardgame.CardGame;
@@ -333,7 +334,7 @@ public class Santase extends CardGame {
 		final int scoreA = countScore(playerA);
 		final int scoreB = countScore(playerB);
 		
-		System.err.println(scoreA + " vs " + scoreB);
+		System.out.println(scoreA + " vs " + scoreB);
 		
 		if (scoreA > 66 && scoreA > scoreB)
 			crown(playerA, scoreB);
@@ -497,6 +498,10 @@ public class Santase extends CardGame {
 	public static class Sequencer implements CardGame.Sequencer {
 		//## needs to be an inner class so to have access to State
 		
+		/* Properties */
+		
+		private int setPoints;
+		
 		/* Strategy Components */
 		
 		private BiConsumer<Deck, Santase.State> recollector;
@@ -505,10 +510,14 @@ public class Santase extends CardGame {
 		/* Construction */
 		
 		public Sequencer() {
-			this((deck, state) -> deck.refresh());
+			this((deck, state) -> deck.refresh(true));
 		}
 		
 		public Sequencer(BiConsumer<Deck, Santase.State> recollector) {
+			this(11, recollector);
+		}
+		public Sequencer(int setPoints, BiConsumer<Deck, Santase.State> recollector) {
+			this.setPoints = setPoints;
 			this.recollector = recollector;
 		}
 		
@@ -516,32 +525,76 @@ public class Santase extends CardGame {
 		/* Game Sequencer Contract */
 		
 		@Override
-		public void cue(CardGame aGame) {
-			if (!(aGame instanceof Santase))
+		public void cue(CardGame game) {
+			if (!(game instanceof Santase))
 				throw new UnsupportedOperationException("This Game Sequencer can only handle Santase games!");
 			
-			Santase game = (Santase) aGame;
+			Santase g = (Santase) game;
 			
 			// Recollect cards
-			recollector.accept(game.deck, game.state);
+			recollector.accept(g.deck, g.state);
 			
 			// Shift players so that the Winner starts
-			if (game.state.winner == game.playerB)
-				game.setPlayers(game.playerB, game.playerA);
+			if (g.state.winner == g.playerB)
+				g.setPlayers(g.playerB, g.playerA);
 			
 			// Reset Game State
-			game.state = game.new State(); //easiest clear
-			game.state.cued = game.playerA;
+			g.state = g.new State(); //easiest clear
+			g.state.cued = g.playerA;
 			
 			// Reset Player States
 			//done through a Reaction to the GameStart Move
-//			game.playerA.reset();
-//			game.playerB.reset();
+//			g.playerA.reset();
+//			g.playerB.reset();
 		}
 
 		@Override
 		public void playSet(CardGame game) {
-			CardGame.Sequencer.super.playSet(game);
+			if (!(game instanceof Santase))
+				throw new UnsupportedOperationException("This Game Sequencer can only handle Santase games!");
+			
+			Santase g = (Santase) game;
+			Map<Player, Integer> points = new HashMap<>();
+			Entry<Player, Integer> lead = null;
+
+			do {
+				g.play();
+				
+				g.players.forEach(player -> points.putIfAbsent((Player) player, 0));
+				
+				Player w = g.state.winner;
+				
+				if (w == Player.NEITHER)
+					points.replaceAll((k, p) -> p + g.state.victoryPoints);
+				else
+					points.compute(w, (k, p) -> p + g.state.victoryPoints);
+				
+				lead = points.entrySet().stream().max((a,b) -> Integer.compare(a.getValue(), b.getValue())).get();
+				if (lead.getValue() >= setPoints) {
+					System.out.print("set:");
+					points.forEach((player, p) -> System.out.print(" " + player + "/" + p));
+					System.out.println();
+					
+					g.fire(new SetWon(lead.getKey()));
+					return;
+				}
+				
+				cue(g);
+			} while (true); 
+		}
+		
+		
+		public static class SetWon extends Move {
+			public final Player winner;
+			
+			public SetWon(Player winner) {
+				this.winner = winner;
+			}
+			
+			@Override
+			public String toString() {
+				return winner + " won the game set.";
+			}
 		}
 	}
 }
