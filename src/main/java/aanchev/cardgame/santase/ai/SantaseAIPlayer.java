@@ -19,7 +19,6 @@ public abstract class SantaseAIPlayer implements Santase.Player, EventStream<San
 	
 	protected Santase.State gameState;
 	protected List<Card> hand;
-	protected int score = 0;
 	
 	
 	/* Construction */
@@ -47,16 +46,11 @@ public abstract class SantaseAIPlayer implements Santase.Player, EventStream<San
 	public void reset() {
 		gameState = null;
 		hand.clear();
-		score = 0;
 	}
 	
 	@Override
 	public void react(Move move) {
 		fire(move);
-	}
-	
-	public int countPoints() {
-		return this.score;
 	}
 	
 	
@@ -72,11 +66,6 @@ public abstract class SantaseAIPlayer implements Santase.Player, EventStream<San
 			// We drew some cards
 			for (Card card : move.cards)
 				hand.add(card);
-		});
-		
-		on((Move.Taken move) -> {
-			for (Card card : move.cards)
-				score += Santase.score(card.rank);
 		});
 		
 		on((Move.PlayExpected move) -> {

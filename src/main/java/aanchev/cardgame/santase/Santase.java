@@ -1,8 +1,12 @@
 package aanchev.cardgame.santase;
 
+import static java.util.Optional.ofNullable;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.Map;
 
 import aanchev.cardgame.CardGame;
 import aanchev.cardgame.model.Card;
@@ -18,11 +22,6 @@ public class Santase extends CardGame {
 	
 	private Player playerA;
 	private Player playerB;
-
-	
-	/* Strategy Components */
-	
-	private BiConsumer<Deck, State> recollector;
 
 	
 	/* Construction */
@@ -57,25 +56,7 @@ public class Santase extends CardGame {
 	}
 	
 	
-	public BiConsumer<Deck, State> setRecollector(BiConsumer<Deck, State> recollector) {
-		this.recollector = recollector;
-		return recollector;
-	}
-	
-	
 	/* Game-Specific Values */
-	
-	public static int score(Card.Rank rank) {
-		switch (rank) {
-		case N9: return 0;
-		case N10: return 10;
-		case Jack: return 2;
-		case Queen: return 3;
-		case King: return 4;
-		case Ace: return 11;
-		default: return -1;
-		}
-	}
 	
 	public static int ordinal(Card.Rank rank) {
 		switch (rank) {
@@ -96,9 +77,32 @@ public class Santase extends CardGame {
 		}
 	}
 	
+	
+	public static int score(Card card) {
+		return score(card.rank);
+	}
+	
+	public static int score(Card.Rank rank) {
+		switch (rank) {
+		case N9: return 0;
+		case N10: return 10;
+		case Jack: return 2;
+		case Queen: return 3;
+		case King: return 4;
+		case Ace: return 11;
+		default: return -1;
+		}
+	}
+
+	
+	public static int strength(Card card) {
+		return strength(card.rank);
+	}
+	
 	public static int strength(Card.Rank rank) {
 		return score(rank);
 	}
+	
 	
 	public boolean stronger(Card c0, Card c1) {
 		if (c0.suit == c1.suit)
@@ -118,16 +122,9 @@ public class Santase extends CardGame {
 	
 	public interface Player extends GamePlayer {
 		public void react(Move move);
-		public void reset();
-		
-		//#! ideally this would not be a player's responsibility
-		//#trusting: For performance reasons, score counting is entrusted to players
-		public int countPoints();
 		
 		public static final Player NEITHER = new Player(){
 			public void react(Move move) {}
-			public void reset() {}
-			public int countPoints() { return 0; }
 			public String toString() { return "Neither Player"; }
 		};
 	}
@@ -143,15 +140,8 @@ public class Santase extends CardGame {
 		protected Player winner = null;
 		protected int victoryPoints = 0;
 		
-		
-		//#trusting: For performance reasons, players on turn are not tracked
-		//protected Player playerOnTurn = null;
-		
-		//#trusting: For performance reasons, player hands are not tracked
-		//protected Map<Player, List<Card>> playerHands;
-
-		//#trusting: For performance reasons, player win-piles are not tracked
-		//protected Map<Player, List<Card>> playerWinPiles;
+		protected Map<Player, List<Card>> playerHands;
+		protected Map<Player, List<Card>> playerWinPiles;
 
 		
 		/* State accessors */
@@ -320,20 +310,6 @@ public class Santase extends CardGame {
 	}
 	
 	
-	public Deck recollectCards() {
-		recollector.accept(deck, state);
-		return deck;
-	}
-	
-	public void reset() {
-		//deck = new Deck(); //#optimized-away: unnecessary in conjuction with `recollectCards()`
-		
-		this.state = new State();
-		playerA.reset();
-		playerB.reset();
-	}
-	
-	
 	/* Game Phases */
 	
 	private void setup() {
@@ -347,8 +323,8 @@ public class Santase extends CardGame {
 	}
 	
 	private void finish() {
-		final int scoreA = playerA.countPoints();
-		final int scoreB = playerB.countPoints();
+		final int scoreA = countScore(playerA);
+		final int scoreB = countScore(playerB);
 		
 		System.err.println(scoreA + " vs " + scoreB);
 		
@@ -379,8 +355,9 @@ public class Santase extends CardGame {
 		Card[] cards = deck.draw(n);
 		Move move = new Move.Drawn(player, cards);
 		
-		//#trusting: For performance reasons, hands are not tracked
-		//state.playerHands.computeIfAbsent(player, k -> new HashMap<>()).addAll(Arrays.asList(cards));
+		state.playerHands
+			.computeIfAbsent(player, k -> new ArrayList<>(5))
+			.addAll(Arrays.asList(cards));
 		
 		player.react(move);
 		fire(move);
@@ -406,8 +383,9 @@ public class Santase extends CardGame {
 	protected void take(Player player, Card... cards) {
 		Move move = new Move.Taken(player, cards);
 		
-		//#trusting: For performance reasons, win-piles are not tracked
-		//state.playerWinPiles.computeIfAbsent(player, k -> new HashMap<>()).addAll(Arrays.asList(cards));
+		state.playerWinPiles
+			.computeIfAbsent(player, k -> new LinkedList<>())
+			.addAll(Arrays.asList(cards));
 		
 		player.react(move);
 		fire(move);
@@ -418,6 +396,15 @@ public class Santase extends CardGame {
 		state.victoryPoints = otherScore == 0 ? 3 : otherScore < 33 ? 2 : 1;
 		
 		fire(new Move.Victory(player, state.victoryPoints, state.turn));
+	}
+	
+	
+	private int countScore(Player player) {
+		return ofNullable(state.playerWinPiles.get(player))
+			.map(cards -> cards.stream()
+					.mapToInt(Santase::strength)
+					.sum())
+			.orElse(0);
 	}
 	
 	
@@ -435,6 +422,9 @@ public class Santase extends CardGame {
 	protected boolean playCard(Player player, Card card) {
 		//#trusting: For performance reasons, players are not double-checked
 		//checkPlayer(player);
+		
+		if (!state.playerHands.get(player).remove(card))
+			throw new IllegalStateException("The card "+card+" was not in possession of "+player+", but they tried to play it!");
 		
 		if (state.playedCard != null) {
 			final Card c0 = state.playedCard; //shorthand
