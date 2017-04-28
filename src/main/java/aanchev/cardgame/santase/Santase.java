@@ -4,9 +4,11 @@ import static java.util.Optional.ofNullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import aanchev.cardgame.CardGame;
 import aanchev.cardgame.model.Card;
@@ -27,13 +29,18 @@ public class Santase extends CardGame {
 	/* Construction */
 	
 	public Santase() {
-		this.deck = new Deck(true);
-		deck.getCards().removeIf(c -> ordinal(c.rank) < 9);
+		this.deck = new Deck(true) {
+			@Override
+			public void refresh(boolean shuffled) {
+				super.refresh(shuffled);
+				cards.removeIf(c -> ordinal(c.rank) < 9);
+			}
+		};
 		this.state = new State();
 	}
 
 	public static CardGame create() {
-		return new Santase(); //TODO: include setup here
+		return new Santase();
 	}
 
 	
@@ -140,8 +147,8 @@ public class Santase extends CardGame {
 		protected Player winner = null;
 		protected int victoryPoints = 0;
 		
-		protected Map<Player, List<Card>> playerHands;
-		protected Map<Player, List<Card>> playerWinPiles;
+		protected Map<Player, List<Card>> playerHands = new HashMap<>();
+		protected Map<Player, List<Card>> playerWinPiles = new HashMap<>();
 
 		
 		/* State accessors */
@@ -192,10 +199,10 @@ public class Santase extends CardGame {
 	
 	public static class Move implements GameEvent {
 
-		public static class StateUsed extends Move {
+		public static class GameStart extends Move {
 			public final State state;
 			
-			public StateUsed(State state) {
+			public GameStart(State state) {
 				this.state = state;
 			}
 		}
@@ -313,7 +320,7 @@ public class Santase extends CardGame {
 	/* Game Phases */
 	
 	private void setup() {
-		broadcastState();
+		startGame(); //broadcast the start of the game
 		
 		draw(playerA, 3);
 		draw(playerB, 3);
@@ -341,10 +348,10 @@ public class Santase extends CardGame {
 
 	/* Game Moves performance */
 	
-	protected void broadcastState() {
-		Move broadcast = new Move.StateUsed(state);
-		playerA.react(broadcast);
-		playerB.react(broadcast);
+	protected void startGame() {
+		Move gameStart = new Move.GameStart(state);
+		playerA.react(gameStart);
+		playerB.react(gameStart);
 	}
 
 	protected void draw(Player player, int n) {
@@ -482,5 +489,59 @@ public class Santase extends CardGame {
 		
 		state.winner = player;
 		return true;
+	}
+
+	
+	/* Game Sequencer */
+
+	public static class Sequencer implements CardGame.Sequencer {
+		//## needs to be an inner class so to have access to State
+		
+		/* Strategy Components */
+		
+		private BiConsumer<Deck, Santase.State> recollector;
+
+		
+		/* Construction */
+		
+		public Sequencer() {
+			this((deck, state) -> deck.refresh());
+		}
+		
+		public Sequencer(BiConsumer<Deck, Santase.State> recollector) {
+			this.recollector = recollector;
+		}
+		
+		
+		/* Game Sequencer Contract */
+		
+		@Override
+		public void cue(CardGame aGame) {
+			if (!(aGame instanceof Santase))
+				throw new UnsupportedOperationException("This Game Sequencer can only handle Santase games!");
+			
+			Santase game = (Santase) aGame;
+			
+			// Recollect cards
+			recollector.accept(game.deck, game.state);
+			
+			// Shift players so that the Winner starts
+			if (game.state.winner == game.playerB)
+				game.setPlayers(game.playerB, game.playerA);
+			
+			// Reset Game State
+			game.state = game.new State(); //easiest clear
+			game.state.cued = game.playerA;
+			
+			// Reset Player States
+			//done through a Reaction to the GameStart Move
+//			game.playerA.reset();
+//			game.playerB.reset();
+		}
+
+		@Override
+		public void playSet(CardGame game) {
+			CardGame.Sequencer.super.playSet(game);
+		}
 	}
 }

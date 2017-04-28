@@ -19,7 +19,7 @@ public class App {
         );
         
         /* Setup Game Sequencer*/
-        CardGame.Sequencer sequencer = new SantaseSequencer();
+        CardGame.Sequencer sequencer = new Santase.Sequencer();
 
         /* Setup Observers */
         new ConsoleUI().bind(game);

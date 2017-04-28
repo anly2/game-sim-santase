@@ -57,9 +57,10 @@ public abstract class SantaseAIPlayer implements Santase.Player, EventStream<San
 	/* Reactions */
 	
 	protected void initReactions() {
-		on((Move.StateUsed move) -> {
-			// We are sent the GameState object
+		on((Move.GameStart move) -> {
+			// We are notified of a Game's Start
 			gameState = move.state;
+			hand.clear();
 		});
 		
 		on((Move.Drawn move) -> {
