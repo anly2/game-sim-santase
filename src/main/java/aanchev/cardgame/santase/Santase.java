@@ -2,6 +2,7 @@ package aanchev.cardgame.santase;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import aanchev.cardgame.CardGame;
 import aanchev.cardgame.model.Card;
@@ -17,6 +18,11 @@ public class Santase extends CardGame {
 	
 	private Player playerA;
 	private Player playerB;
+
+	
+	/* Strategy Components */
+	
+	private BiConsumer<Deck, State> recollector;
 
 	
 	/* Construction */
@@ -48,6 +54,12 @@ public class Santase extends CardGame {
 	
 	public Player other(Player player) {
 		return (player == playerA)? playerB : playerA;
+	}
+	
+	
+	public BiConsumer<Deck, State> setRecollector(BiConsumer<Deck, State> recollector) {
+		this.recollector = recollector;
+		return recollector;
 	}
 	
 	
@@ -106,6 +118,7 @@ public class Santase extends CardGame {
 	
 	public interface Player extends GamePlayer {
 		public void react(Move move);
+		public void reset();
 		
 		//#! ideally this would not be a player's responsibility
 		//#trusting: For performance reasons, score counting is entrusted to players
@@ -113,6 +126,7 @@ public class Santase extends CardGame {
 		
 		public static final Player NEITHER = new Player(){
 			public void react(Move move) {}
+			public void reset() {}
 			public int countPoints() { return 0; }
 			public String toString() { return "Neither Player"; }
 		};
@@ -303,6 +317,20 @@ public class Santase extends CardGame {
 		askToPlay(state.playedCard == null ? state.cued : other(state.cued));
 		
 		state.turn++;
+	}
+	
+	
+	public Deck recollectCards() {
+		recollector.accept(deck, state);
+		return deck;
+	}
+	
+	public void reset() {
+		//deck = new Deck(); //#optimized-away: unnecessary in conjuction with `recollectCards()`
+		
+		this.state = new State();
+		playerA.reset();
+		playerB.reset();
 	}
 	
 	

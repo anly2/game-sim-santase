@@ -47,13 +47,17 @@ public abstract class CardGame implements EventStream.Default<CardGame.GameEvent
 	
 	/* Game progression */
 	
-	public abstract void progress();
 	public abstract boolean isOver();
+	public abstract void progress();
+
 	
 	public void play() {
 		while (!isOver())
 			progress();
 	}
+	
+	public abstract Deck recollectCards();
+	public abstract void reset();
 	
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })

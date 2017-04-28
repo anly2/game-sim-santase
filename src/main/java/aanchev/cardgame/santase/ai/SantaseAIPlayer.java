@@ -44,6 +44,12 @@ public abstract class SantaseAIPlayer implements Santase.Player, EventStream<San
 	
 	/* Santase.Player implementation */
 	
+	public void reset() {
+		gameState = null;
+		hand.clear();
+		score = 0;
+	}
+	
 	@Override
 	public void react(Move move) {
 		fire(move);
