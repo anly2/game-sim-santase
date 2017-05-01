@@ -8,6 +8,8 @@ import java.util.Set;
 import aanchev.cardgame.model.Card;
 import aanchev.cardgame.santase.Santase;
 import aanchev.cardgame.santase.Santase.Move;
+import aanchev.cardgame.santase.Santase.OutOfCardsException;
+import aanchev.cardgame.santase.Santase.Player;
 import aanchev.eventful.EventStream;
 import aanchev.eventful.Handler;
 
@@ -24,11 +26,29 @@ public abstract class SantaseAIPlayer implements Santase.Player, EventStream<San
 	/* Construction */
 	
 	public SantaseAIPlayer() {
-		this.name = "Player " + (L++);
+		this("Player " + (L++));
+	}
+	
+	public SantaseAIPlayer(String name) {
+		name(name);
 		
 		this.hand = new ArrayList<>(5);
 		
 		initReactions();
+	}
+	
+	
+	/* Accessors */
+	
+	@Override
+	public String name() {
+		return this.name;
+	}
+	
+	@Override
+	public Player name(String name) {
+		this.name = name;
+		return this;
 	}
 	
 	
@@ -75,6 +95,9 @@ public abstract class SantaseAIPlayer implements Santase.Player, EventStream<San
 	}
 	
 	protected void doPlay() {
+		if (hand.isEmpty())
+			throw new OutOfCardsException();
+		
 		if (gameState.getPlayedCard() == null)
 			playRequest();
 		else

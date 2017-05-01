@@ -130,7 +130,23 @@ public class Santase extends CardGame {
 	/* Inner Types */
 	
 	public interface Player extends GamePlayer {
+		/* Core behaviour */
+		
 		public void react(Move move);
+
+		
+		/* Optional Accessors */
+		
+		default Player name(String name) {
+			return this;
+		}
+		
+		default String name() {
+			return this.toString();
+		}
+		
+		
+		/* Static CONST instances */
 		
 		public static final Player NEITHER = new Player(){
 			public void react(Move move) {}
