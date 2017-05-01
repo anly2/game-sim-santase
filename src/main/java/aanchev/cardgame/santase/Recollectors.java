@@ -68,7 +68,7 @@ public class Recollectors {
 					});
 				
 				let(state.playerHands.get(player),
-					cards -> deck.putOnTop(cards));
+					deck::putOnTop);
 			});
 		}
 		
