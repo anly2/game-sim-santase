@@ -1,7 +1,6 @@
 package aanchev.cardgame.ui;
 
 import aanchev.cardgame.CardGame.GameEvent;
-import aanchev.cardgame.UI;
 import aanchev.eventful.EventStream;
 import aanchev.eventful.Handler;
 

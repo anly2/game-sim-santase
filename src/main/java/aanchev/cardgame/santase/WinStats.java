@@ -5,11 +5,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import aanchev.cardgame.CardGame.GameEvent;
-import aanchev.cardgame.Stats;
 import aanchev.cardgame.santase.Santase.Move.Victory;
+import aanchev.cardgame.CardGame.GameEvent;
 import aanchev.cardgame.santase.Santase.Player;
 import aanchev.cardgame.santase.Santase.Sequencer.SetWon;
+import aanchev.cardgame.ui.Stats;
 import aanchev.eventful.EventStream;
 import aanchev.eventful.Handler;
 

@@ -1,4 +1,4 @@
-package aanchev.cardgame;
+package aanchev.cardgame.ui;
 
 import aanchev.eventful.EventStream;
 
