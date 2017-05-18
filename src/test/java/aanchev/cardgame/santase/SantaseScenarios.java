@@ -113,7 +113,7 @@ public class SantaseScenarios extends CardGameSimulator {
 		);
 	}
 	
-	@Test
+	//@Test
 	public void runScenario1_6() {
 		scenario1(
 			new RandomSantaseAIPlayer().name("Rando"),
@@ -126,6 +126,32 @@ public class SantaseScenarios extends CardGameSimulator {
 		scenario1(
 			new AdvancedSantaseAIPlayer().name("__A__"),
 			new AdvancedSantaseAIPlayer().name("__B__")
+		);
+	}
+	
+
+	
+	//@Test
+	public void runScenario1_2_1() {
+		scenario1(
+			new SimpleSantaseAIPlayer().name("_Simple_"),
+			new AverageSantaseAIPlayer().name("__Avrg__")
+		);
+	}
+
+	//@Test
+	public void runScenario1_2_2() {
+		scenario1(
+			new SimpleSantaseAIPlayer().name("_Simple_"),
+			new AdvancedSantaseAIPlayer().name("__Adva__")
+		);
+	}
+
+	@Test
+	public void runScenario1_2_3() {
+		scenario1(
+			new AverageSantaseAIPlayer().name("__Avrg__"),
+			new AdvancedSantaseAIPlayer().name("__Adva__")
 		);
 	}
 }
