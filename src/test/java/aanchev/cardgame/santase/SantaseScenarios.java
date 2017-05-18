@@ -11,6 +11,7 @@ import aanchev.cardgame.CardGame.GameEvent;
 import aanchev.cardgame.CardGame.GamePlayer;
 import aanchev.cardgame.CardGameSimulator;
 import aanchev.cardgame.santase.Recollectors.CasualRecollector;
+import aanchev.cardgame.santase.ai.AverageSantaseAIPlayer;
 import aanchev.cardgame.santase.ai.RandomSantaseAIPlayer;
 import aanchev.cardgame.santase.ai.SimpleSantaseAIPlayer;
 import aanchev.cardgame.ui.Stats;
@@ -86,7 +87,7 @@ public class SantaseScenarios extends CardGameSimulator {
 		);
 	}
 	
-	@Test
+	//@Test
 	public void runScenario1_3() {
 		scenario1(
 			new RandomSantaseAIPlayer().name("Rando"),
@@ -94,4 +95,11 @@ public class SantaseScenarios extends CardGameSimulator {
 		);
 	}
 
+	@Test
+	public void runScenario1_4() {
+		scenario1(
+			new RandomSantaseAIPlayer().name("Rando"),
+			new AverageSantaseAIPlayer().name("__A__")
+		);
+	}
 }

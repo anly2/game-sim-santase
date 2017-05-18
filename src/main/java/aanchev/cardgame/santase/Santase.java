@@ -67,6 +67,27 @@ public class Santase extends CardGame {
 	
 	/* Game-Specific Values */
 	
+	public static int index(Card card) {
+		int w = index(card.suit);
+		int h = ordinal(card.rank);
+		
+		int i = w*W + h;
+		return i;
+	}
+	
+	public static int index(Card.Suit suit) {
+		switch (suit) {
+		case Clubs: return 0;
+		case Diamonds: return 1;
+		case Hearts: return 2;
+		case Spades: return 3;
+		default: return -1;
+		}
+	}
+	
+	private static int W = java.util.stream.Stream.of(Card.Rank.values()).mapToInt(Santase::ordinal).max().orElse(-1);
+	
+	
 	public static int ordinal(Card.Rank rank) {
 		switch (rank) {
 		case N2: return 2;
@@ -167,6 +188,7 @@ public class Santase extends CardGame {
 		
 		protected Map<Player, List<Card>> playerHands = new HashMap<>();
 		protected Map<Player, List<Card>> playerWinPiles = new HashMap<>();
+		protected Map<Player, Integer> playerCallPoints = new HashMap<>();
 
 		
 		/* State accessors */
@@ -423,11 +445,12 @@ public class Santase extends CardGame {
 	
 	
 	private int countScore(Player player) {
-		return ofNullable(state.playerWinPiles.get(player))
-			.map(cards -> cards.stream()
-					.mapToInt(Santase::strength)
-					.sum())
-			.orElse(0);
+		return ofNullable(state.playerCallPoints.get(player)).orElse(0) +
+				ofNullable(state.playerWinPiles.get(player))
+				.map(cards -> cards.stream()
+						.mapToInt(Santase::strength)
+						.sum())
+				.orElse(0);
 	}
 	
 	
@@ -479,7 +502,14 @@ public class Santase extends CardGame {
 		//#trusting: For performance reasons, players are not double-checked
 		//checkPlayer(player);
 		
-		return false;
+		int points = card.suit==state.trumpCard.suit? 40 : 20;
+		state.playerCallPoints.compute(player, (k, p) -> p==null? points : p+points);
+		
+		
+		//#! THIS ONLY HANDLES THE CALLING
+		//#! THE CARD MUST BE PLAYED THROUGH .playCard()
+		
+		return true;
 	}
 	
 	protected boolean exchangeTrump(Player player) {
@@ -563,6 +593,7 @@ public class Santase extends CardGame {
 //			g.playerB.reset();
 		}
 
+		@SuppressWarnings("null")
 		@Override
 		public void playSet(CardGame game) {
 			if (!(game instanceof Santase))
@@ -585,17 +616,19 @@ public class Santase extends CardGame {
 					points.compute(w, (k, p) -> p + g.state.victoryPoints);
 				
 				lead = points.entrySet().stream().max((a,b) -> Integer.compare(a.getValue(), b.getValue())).get();
-				if (lead.getValue() >= setPoints) {
-//					System.out.print("set:");
-//					points.forEach((player, p) -> System.out.print(" " + player + "/" + p));
-//					System.out.println();
-					
-					g.fire(new SetWon(lead.getKey()));
-					return;
-				}
+				if (lead.getValue() >= setPoints)
+					break;
 				
 				cue(g);
-			} while (true); 
+			} while (true);
+			
+
+//			System.out.print("set:");
+//			points.forEach((player, p) -> System.out.print(" " + player + "/" + p));
+//			System.out.println();
+			
+			g.fire(new SetWon(lead.getKey()));
+			cue(g);
 		}
 		
 		
