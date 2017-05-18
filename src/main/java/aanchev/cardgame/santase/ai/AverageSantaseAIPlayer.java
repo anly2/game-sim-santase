@@ -14,7 +14,17 @@ public class AverageSantaseAIPlayer extends SimpleSantaseAIPlayer {
 	@Override
 	protected void playRequest() {
 		
-		// If we have a King+Queen combo, call it
+		// If we have a King+Queen combo, call it		
+		if (callCombo()) //also makes the call and plays a card
+			return;
+		
+		
+		// Play normally
+		super.playRequest();
+	}
+	
+
+	protected boolean callCombo() {
 		List<Card> special = hand.stream()
 			.filter(c -> c.rank == Rank.King || c.rank == Rank.Queen)
 			.sorted((a, b) -> Integer.compare(index(a), index(b)))
@@ -22,11 +32,14 @@ public class AverageSantaseAIPlayer extends SimpleSantaseAIPlayer {
 		
 		if (special.size() > 1 && special.get(0).suit == special.get(1).suit) {
 			call(special.get(0));
-			return;
+			return true;
 		}
 		
-		
-		// Play normally
-		super.playRequest();
+		return false;
+	}
+	
+	protected void call(Card card) {
+		gameState.callPair(this, card);
+		play(card);
 	}
 }

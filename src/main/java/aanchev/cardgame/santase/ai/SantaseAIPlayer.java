@@ -115,11 +115,6 @@ public abstract class SantaseAIPlayer implements Santase.Player, EventStream<San
 		gameState.playCard(this, card);
 	}
 	
-	protected void call(Card card) {
-		gameState.callPair(this, card);
-		play(card);
-	}
-	
 	
 	/* General Object Properties */
 	
