@@ -96,4 +96,18 @@ public class Deck {
 		for (Card card : cards)
 			putOnBottom(card);
 	}
+
+
+	public Card takeFromBottom() {
+		return this.cards.removeLast();
+	}
+
+	public Card[] takeFromBottom(int n) {
+		Card[] cards = new Card[n];
+		
+		for (int i=0; i<n; i++)
+			cards[i] = takeFromBottom();
+		
+		return cards;
+	}
 }

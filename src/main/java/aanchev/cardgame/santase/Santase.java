@@ -15,6 +15,7 @@ import java.util.function.BiConsumer;
 import aanchev.cardgame.CardGame;
 import aanchev.cardgame.model.Card;
 import aanchev.cardgame.model.Deck;
+import aanchev.cardgame.model.Card.Rank;
 
 public class Santase extends CardGame {
 	
@@ -516,7 +517,38 @@ public class Santase extends CardGame {
 		//#trusting: For performance reasons, players are not double-checked
 		//checkPlayer(player);
 		
-		return false;
+		//not allowed on the first turn
+		if (state.turn == 0) 
+			return false;
+		
+		//only allowed at "Requests"
+		if (state.turn % 2 != 0)
+			return false;
+		
+		//not allowed when deck is finished or almost finished
+		if (deck.size() <= 2)
+			return false;
+		
+		
+		//not allowed when market is closed
+		//#!
+
+		
+		final Card trumpCard = state.getTrumpCard(); //local store
+		final Card trump9 = Card.of(trumpCard.suit, Rank.N9);
+		
+		if (!state.playerHands.get(player).remove(trump9))
+			return false;
+			//throw new IllegalStateException("The card "+trump9+" was not in possession of "+player+", but they tried to use it!");
+		
+		state.trumpCard = trump9;
+		deck.takeFromBottom();
+//		assert trumpCard.equals(bottomCard);
+		deck.putOnBottom(trump9);
+		
+		state.playerHands.get(player).add(trumpCard);
+		
+		return true;
 	}
 	
 	protected boolean closeMarket(Player player) {

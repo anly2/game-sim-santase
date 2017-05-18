@@ -14,6 +14,9 @@ public class AverageSantaseAIPlayer extends SimpleSantaseAIPlayer {
 	@Override
 	protected void playRequest() {
 		
+		// If we have the Trump 9, exchange it
+		tryExchange();
+		
 		// If we have a King+Queen combo, call it		
 		if (callCombo()) //also makes the call and plays a card
 			return;
@@ -21,6 +24,19 @@ public class AverageSantaseAIPlayer extends SimpleSantaseAIPlayer {
 		
 		// Play normally
 		super.playRequest();
+	}
+	
+
+	protected boolean tryExchange() {
+		final Card trumpCard = gameState.getTrumpCard();
+		if (!gameState.exchangeTrump(this)) //does the check for possession anyhow
+			return false;
+
+		//Update hand
+		hand.remove(Card.of(trumpCard.suit, Rank.N9));
+		hand.add(trumpCard);
+		
+		return true;
 	}
 	
 
