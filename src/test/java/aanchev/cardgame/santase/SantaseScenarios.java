@@ -95,11 +95,20 @@ public class SantaseScenarios extends CardGameSimulator {
 		);
 	}
 
-	@Test
+	//@Test
 	public void runScenario1_4() {
 		scenario1(
 			new RandomSantaseAIPlayer().name("Rando"),
 			new AverageSantaseAIPlayer().name("__A__")
+		);
+	}
+
+
+	@Test
+	public void runScenario1_5() {
+		scenario1(
+			new AverageSantaseAIPlayer().name("__A__"),
+			new AverageSantaseAIPlayer().name("__B__")
 		);
 	}
 }
