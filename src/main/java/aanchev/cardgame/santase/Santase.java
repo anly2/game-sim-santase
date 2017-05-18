@@ -564,8 +564,7 @@ public class Santase extends CardGame {
 		
 		//#trusting: For performance reasons, score counting is entrusted to players
 		// ... do count scores, returning false upon insufficient points
-		
-		state.winner = player;
+		finish();
 		return true;
 	}
 
