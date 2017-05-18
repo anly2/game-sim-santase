@@ -1,11 +1,11 @@
 package aanchev.cardgame.santase;
 
+import static aanchev.cardgame.Randomness.chance;
 import static java.util.Collections.reverse;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -70,12 +70,6 @@ public class Recollectors {
 				let(state.playerHands.get(player),
 					deck::putOnTop);
 			});
-		}
-		
-		
-		private Random rand = new Random(); //potentially seed
-		private boolean chance(double probability) {
-			return (rand.nextDouble() < probability);
 		}
 	}
 }

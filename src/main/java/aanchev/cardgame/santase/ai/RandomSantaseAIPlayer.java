@@ -1,7 +1,6 @@
 package aanchev.cardgame.santase.ai;
 
-import java.util.List;
-import java.util.Random;
+import static aanchev.cardgame.Randomness.pickRandom;
 
 public class RandomSantaseAIPlayer extends SantaseAIPlayer {
 	
@@ -13,13 +12,5 @@ public class RandomSantaseAIPlayer extends SantaseAIPlayer {
 	@Override
 	protected void playResponse() {
 		play(pickRandom(hand));
-	}
-
-
-	private static Random rand = new Random(); //potentially seed and/or share
-	private <E> E pickRandom(List<E> arr) {
-		if (arr.isEmpty())
-			return null;
-		return arr.get(rand.nextInt(arr.size()));
 	}
 }

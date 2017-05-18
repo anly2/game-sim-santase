@@ -1,5 +1,6 @@
 package aanchev.cardgame.model;
 
+import static aanchev.cardgame.Randomness.getRNG;
 import static java.util.Collections.shuffle;
 
 import java.util.Arrays;
@@ -40,7 +41,7 @@ public class Deck {
 			this.cards.add(card);
 		
 		if (shuffled)
-			shuffle(this.cards);
+			shuffle(this.cards, getRNG());
 	}
 
 	
