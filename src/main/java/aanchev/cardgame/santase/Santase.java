@@ -183,6 +183,7 @@ public class Santase extends CardGame {
 		protected int turn = 0;
 		protected Card trumpCard = null;
 		protected Card playedCard = null;
+		protected boolean marketClosed = false;
 		protected Player cued = null;
 		protected Player winner = null;
 		protected int victoryPoints = 0;
@@ -206,11 +207,16 @@ public class Santase extends CardGame {
 			return playedCard;
 		}
 	
-		public Player getWinner() {
+		public boolean isMarketClosed() {
+			return this.marketClosed;
+		}
+		
+		
+		protected Player getWinner() {
 			return this.winner;
 		}
 	
-		public int getVictoryPoints() {
+		protected int getVictoryPoints() {
 			return this.victoryPoints;
 		}
 		
@@ -309,6 +315,13 @@ public class Santase extends CardGame {
 				return player + " won the card(s): " + Arrays.toString(cards);
 			}
 		}
+
+		public static class MarketClosed extends Move {
+			@Override
+			public String toString() {
+				return "Market closed";
+			}
+		}
 		
 		public static class Victory implements GameEvent {
 			public final Player winner;
@@ -326,6 +339,7 @@ public class Santase extends CardGame {
 				return winner +" won "+victoryPoints+" points on turn "+turn;
 			}
 		}
+
 	}
 	
 	
@@ -396,7 +410,7 @@ public class Santase extends CardGame {
 	}
 
 	protected void draw(Player player, int n) {
-		if (deck.size() < n)
+		if (state.marketClosed || deck.size() < n)
 			return;
 			//throw new NotEnoughDeckCardsException(n);
 		
@@ -408,6 +422,14 @@ public class Santase extends CardGame {
 		
 		player.react(move);
 		fire(move);
+		
+		
+		if (deck.size() == 0) {
+			final Move.MarketClosed e = new Move.MarketClosed();
+			fire(e);
+			playerA.react(e);
+			playerB.react(e);
+		}
 	}
 
 	protected void revealTrump() {
@@ -529,9 +551,9 @@ public class Santase extends CardGame {
 		if (deck.size() <= 2)
 			return false;
 		
-		
 		//not allowed when market is closed
-		//#!
+		if (state.marketClosed)
+			return false;
 
 		
 		final Card trumpCard = state.getTrumpCard(); //local store
@@ -555,7 +577,23 @@ public class Santase extends CardGame {
 		//#trusting: For performance reasons, players are not double-checked
 		//checkPlayer(player);
 		
-		return false;
+		//not allowed on the first turn
+		if (state.turn == 0) 
+			return false;
+		
+		//only allowed at "Requests"
+		if (state.turn % 2 != 0)
+			return false;
+		
+		//not allowed when deck is finished or almost finished
+		if (deck.size() <= 2)
+			return false;		
+
+		
+		state.marketClosed = true;
+		fire(new Move.MarketClosed());
+		
+		return true;
 	}
 	
 	protected boolean doWinCount(Player player) {
